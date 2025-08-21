@@ -526,7 +526,7 @@ if menu == "Özet Ekran":
         st.dataframe(bek_teklif[["Müşteri Adı", "Tarih", "Teklif No", "Tutar", "Ürün/Hizmet", "Açıklama"]], use_container_width=True)
 
     # === Bekleyen Proformalar ===
-     st.markdown("#### 📄 Bekleyen Proformalar")
+    st.markdown("#### 📄 Bekleyen Proformalar")
     if "Durum" in df_proforma.columns:
         bek_prof = df_proforma[df_proforma["Durum"] == "Beklemede"].copy()
     else:
