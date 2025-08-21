@@ -1449,10 +1449,8 @@ elif menu == "ETA Takibi":
         filtre = (df_eta["Müşteri Adı"] == sec_musteri) & (df_eta["Proforma No"] == sec_proforma)
         mevcut_eta = df_eta.loc[filtre, "ETA Tarihi"].values[0] if filtre.any() else ""
         mevcut_aciklama = df_eta.loc[filtre, "Açıklama"].values[0] if filtre.any() else ""
-        try:
-            varsayilan_eta = pd.to_datetime(mevcut_eta).date() if mevcut_eta else datetime.date.today()
-        except Exception:
-            varsayilan_eta = datetime.date.today()
+        mevcut_eta = pd.to_datetime(mevcut_eta, errors="coerce")
+        varsayilan_eta = mevcut_eta.date() if not pd.isna(mevcut_eta) else datetime.date.today()
 
         # Form 1: Güncelle
         with st.form("edit_eta"):
