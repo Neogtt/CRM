@@ -361,8 +361,6 @@ label_by_name = {n: f"{i} {n}" for (n,i) in allowed_menus}
 if "menu_state" not in st.session_state:
     st.session_state.menu_state = allowed_menus[0][0]
 
-st.sidebar.markdown(""" ... CSS KISMI SENİN KODDAKİYLE AYNI ... """, unsafe_allow_html=True)
-
 def _on_menu_change():
     sel_label = st.session_state.menu_radio_label
     st.session_state.menu_state = name_by_label.get(sel_label, allowed_menus[0][0])
