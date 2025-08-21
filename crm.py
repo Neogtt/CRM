@@ -302,6 +302,25 @@ def load_frames_from_local() -> Tuple[pd.DataFrame, ...]:
         
 df_musteri, df_kayit, df_teklif, df_proforma, df_evrak, df_eta, df_fuar = load_frames_from_local()
 
+def update_excel():
+    """Persist global DataFrames to local Excel and optionally sync to Google Sheets."""
+    global df_musteri, df_kayit, df_teklif, df_proforma, df_evrak, df_eta, df_fuar
+
+    with pd.ExcelWriter("temp.xlsx", engine="openpyxl") as writer:
+        df_musteri.to_excel(writer, sheet_name="Sayfa1", index=False)
+        df_kayit.to_excel(writer, sheet_name="Kayıtlar", index=False)
+        df_teklif.to_excel(writer, sheet_name="Teklifler", index=False)
+        df_proforma.to_excel(writer, sheet_name="Proformalar", index=False)
+        df_evrak.to_excel(writer, sheet_name="Evraklar", index=False)
+        df_eta.to_excel(writer, sheet_name="ETA", index=False)
+        df_fuar.to_excel(writer, sheet_name="FuarMusteri", index=False)
+
+    # ✅ Optional: sync customers to Google Sheets
+    try:
+        write_customers_to_gsheet(df_musteri)
+    except Exception as e:
+        st.warning(f"Google Sheets güncellemesi başarısız: {e}")
+
 def execute_with_retry(request, retries: int = 3, wait: float = 1.0):
     """Execute a Google API request with retry on rate limit or server errors."""
     for attempt in range(retries):
