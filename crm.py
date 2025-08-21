@@ -512,6 +512,7 @@ if menu == "Özet Ekran":
     st.markdown("---")
 
     # === Bekleyen Teklifler ===
+    st.markdown("#### 📄 Bekleyen Teklifler")
     if "Durum" in df_teklif.columns:
         bek_teklif = df_teklif[df_teklif["Durum"] == "Açık"].copy()
     else:
@@ -525,6 +526,7 @@ if menu == "Özet Ekran":
         st.dataframe(bek_teklif[["Müşteri Adı", "Tarih", "Teklif No", "Tutar", "Ürün/Hizmet", "Açıklama"]], use_container_width=True)
 
     # === Bekleyen Proformalar ===
+     st.markdown("#### 📄 Bekleyen Proformalar")
     if "Durum" in df_proforma.columns:
         bek_prof = df_proforma[df_proforma["Durum"] == "Beklemede"].copy()
     else:
@@ -538,6 +540,7 @@ if menu == "Özet Ekran":
         st.dataframe(bek_prof[["Müşteri Adı", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]], use_container_width=True)
 
     # === Sevk Bekleyen Siparişler ===
+    st.markdown("#### 🚚 Sevk Bekleyen Siparişler")
     for c in ["Sevk Durumu", "Ülke", "Termin Tarihi"]:
         if c not in df_proforma.columns:
             df_proforma[c] = ""
@@ -557,6 +560,7 @@ if menu == "Özet Ekran":
         st.dataframe(sevk_bekleyen[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Termin Tarihi", "Tutar", "Vade (gün)", "Açıklama"]], use_container_width=True)
 
     # === ETA Takibi ===
+    st.markdown("#### 🛳️ ETA Takibi")
     eta_yolda = df_proforma[df_proforma.get("Sevk Durumu", "") == "Sevkedildi"].copy()
     toplam_eta = pd.to_numeric(eta_yolda.get("Tutar", []), errors="coerce").sum()
     st.markdown(f"<div style='font-size:1.1em;color:#c471f5;font-weight:bold;'>Toplam: {toplam_eta:,.2f} $</div>", unsafe_allow_html=True)
@@ -567,6 +571,7 @@ if menu == "Özet Ekran":
         st.dataframe(eta_yolda[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]], use_container_width=True)
 
     # === Son Teslim Edilenler ===
+    st.markdown("#### ✅ Son Teslim Edilenler")
     if "Sevk Durumu" in df_proforma.columns:
         teslim = df_proforma[df_proforma["Sevk Durumu"] == "Ulaşıldı"].copy()
         if not teslim.empty:
