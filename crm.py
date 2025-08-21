@@ -1508,9 +1508,10 @@ elif menu == "ETA Takibi":
         df_eta["ETA Tarihi"] = pd.to_datetime(df_eta["ETA Tarihi"], errors="coerce")
         today = pd.to_datetime(datetime.date.today())
         df_eta["Kalan Gün"] = (df_eta["ETA Tarihi"] - today).dt.days
+        df_eta["Kalan Gün"] = df_eta["Kalan Gün"].astype("Int64")
 
         def highlight_days(val):
-            if pd.isna(val):
+            if val == "" or pd.isna(val):
                 return ''
             if val < 0:
                 return 'background-color: #ffcccc;'  # kırmızı
@@ -1518,7 +1519,8 @@ elif menu == "ETA Takibi":
                 return 'background-color: #fff3cd;'  # turuncu
             else:
                 return 'background-color: #d4edda;'  # yeşil
-
+                
+        df_eta["Kalan Gün"] = df_eta["Kalan Gün"].fillna("")
         tablo = df_eta[["Müşteri Adı", "Proforma No", "ETA Tarihi", "Kalan Gün", "Açıklama"]].copy()
         tablo = tablo.sort_values(["ETA Tarihi", "Müşteri Adı", "Proforma No"], ascending=[True, True, True])
         st.dataframe(tablo.style.applymap(highlight_days, subset=["Kalan Gün"]), use_container_width=True)
