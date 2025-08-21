@@ -1054,7 +1054,7 @@ elif menu == "Güncel Sipariş Durumu":
         (df_proforma["Durum"] == "Siparişe Dönüştü") & (~df_proforma["Sevk Durumu"].isin(["Sevkedildi","Ulaşıldı"]))
     ].copy()
 
-    for col in ["Termin Tarihi","Sipariş Formu","Ülke","Satış Temsilcisi","Ödeme Şekli"]:
+    for col in ["Termin Tarihi", "Sipariş Formu", "Ülke", "Satış Temsilcisi", "Ödeme Şekli", "Fatura No"]:
         if col not in siparisler.columns:
             siparisler[col] = ""
 
@@ -1138,8 +1138,8 @@ elif menu == "Güncel Sipariş Durumu":
             if pd.notnull(row.get("PDF","")) and row.get("PDF",""):
                 links.append(f"<a href='{row['PDF']}' target='_blank'>Proforma PDF ({row['Proforma No']})</a>")
             if pd.notnull(row.get("Sipariş Formu","")) and row.get("Sipariş Formu",""):
-                fname = f"{row['Müşteri Adı']}__{row['Proforma No']}__{row['Fatura No']}"
-
+                fname = f"{row['Müşteri Adı']}__{row['Proforma No']}__{row.get('Fatura No', '')}"
+                
 # --- FATURA & İHRACAT EVRAKLARI ---
 elif menu == "Fatura & İhracat Evrakları":
     st.markdown("<h2 style='color:#219A41; font-weight:bold;'>Fatura & İhracat Evrakları</h2>", unsafe_allow_html=True)
