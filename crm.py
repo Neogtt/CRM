@@ -113,6 +113,90 @@ except Exception as e:
     st.stop()
 
 # === Google Sheets Okuma Fonksiyonları ===
+
+
+def ensure_required_columns(df: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
+    """Belirlenen zorunlu kolonları ekler, eksikleri boş değerle tamamlar."""
+    required_columns = {
+        "Sayfa1": {
+            "Müşteri Adı": "",
+            "Ülke": "",
+            "Telefon": "",
+            "E-posta": "",
+            "Adres": "",
+            "Satış Temsilcisi": "",
+            "Kategori": "",
+            "Durum": "",
+            "Vade (Gün)": "",
+            "Ödeme Şekli": "",
+            "Para Birimi": "",
+            "DT Seçimi": "",
+        },
+        "Kayıtlar": {
+            "Müşteri Adı": "",
+            "Tarih": "",
+            "Tip": "",
+            "Açıklama": "",
+        },
+        "Teklifler": {
+            "Müşteri Adı": "",
+            "Tarih": "",
+            "Teklif No": "",
+            "Tutar": "",
+            "Ürün/Hizmet": "",
+            "Açıklama": "",
+            "Durum": "",
+            "PDF": "",
+        },
+        "Proformalar": {
+            "Müşteri Adı": "",
+            "Tarih": "",
+            "Proforma No": "",
+            "Tutar": "",
+            "Vade (gün)": "",
+            "Açıklama": "",
+            "Durum": "",
+            "Sevk Durumu": "",
+            "Termin Tarihi": "",
+            "Sipariş Formu": "",
+            "Ulaşma Tarihi": "",
+        },
+        "Evraklar": {
+            "Müşteri Adı": "",
+            "Proforma No": "",
+            "Fatura No": "",
+            "Fatura Tarihi": "",
+            "Vade Tarihi": "",
+            "Tutar": "",
+            "Ödendi": False,
+            "Ödeme Kanıtı": "",
+        },
+        "ETA": {
+            "Müşteri Adı": "",
+            "Proforma No": "",
+            "ETA Tarihi": "",
+            "Açıklama": "",
+        },
+        "FuarMusteri": {
+            "Fuar Adı": "",
+            "Müşteri Adı": "",
+            "Ülke": "",
+            "Telefon": "",
+            "E-mail": "",
+            "Satış Temsilcisi": "",
+            "Açıklamalar": "",
+            "Görüşme Kalitesi": "",
+            "Tarih": "",
+        },
+    }
+
+    required = required_columns.get(sheet_name, {})
+    for col, default in required.items():
+        if col not in df.columns:
+            df[col] = default
+    return df
+
+
 def read_sheet(sheet_name: str) -> pd.DataFrame:
     """Google Sheets'ten oku, eksik kolonları tamamla"""
     try:
@@ -138,6 +222,18 @@ def read_sheet(sheet_name: str) -> pd.DataFrame:
     except Exception as e:
         st.error(f"{sheet_name} okunamadı: {e}")
         return ensure_required_columns(pd.DataFrame(), sheet_name)
+
+
+def read_all_sheets() -> Tuple[pd.DataFrame, ...]:
+    """Tüm sheet'leri okuyup DataFrame'leri döndür"""
+    df_m = read_sheet("Sayfa1")
+    df_k = read_sheet("Kayıtlar")
+    df_t = read_sheet("Teklifler")
+    df_p = read_sheet("Proformalar")
+    df_e = read_sheet("Evraklar")
+    df_eta = read_sheet("ETA")
+    df_fuar = read_sheet("FuarMusteri")
+    return df_m, df_k, df_t, df_p, df_e, df_eta, df_fuar
 
 
 def load_frames_from_local() -> Tuple[pd.DataFrame, ...]:
