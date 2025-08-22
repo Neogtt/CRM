@@ -429,7 +429,9 @@ menu = st.session_state.menu_state
 with st.sidebar.expander("🔄 Sheets Senkron"):
     if st.button("Müşterileri Sheets’e Yaz"):
         push_customers_throttled()
-
+        
+SIDEBAR_CSS = """
+<style>
 /* Sidebar custom styling adhering to corporate guidelines */
 
 /* Sidebar container */
@@ -454,6 +456,11 @@ div[data-testid="stSidebar"] .nav-link:hover {
     background-color: #0059b3;
     color: #FFFFFF;
 }
+
+</style>
+"""
+
+st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
 # ===========================
 # ==== E-POSTA (Cari açılış)
