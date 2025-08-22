@@ -400,7 +400,7 @@ menuler = [
   {"label": "Medya Çekmecesi", "icon": "folder"},
   {"label": "Satış Performansı", "icon": "graph-up"}
 ]
-if st.session_state.user == "Boss":
+if st.session_state.user = "Boss":
     allowed_menus = [("Özet Ekran", "bar-chart")]
 else:
     allowed_menus = menuler
