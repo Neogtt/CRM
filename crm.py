@@ -6,6 +6,7 @@ import io, os, re, time, tempfile, datetime, mimetypes, json
 from email.message import EmailMessage
 import smtplib
 from typing import Tuple
+from pathlib import Path
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload, MediaIoBaseDownload
@@ -25,9 +26,12 @@ st.markdown(
 )
 
 # Load custom sidebar styles
-with open("css/sidebar.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+css_path = Path(__file__).parent / "css" / "sidebar.css"
+try:
+    with css_path.open() as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+except FileNotFoundError:
+    st.warning("Sidebar CSS not found; using default styles")
 
 # Sabitler (Kullanacağımız Drive klasörleri ve Sheets)
 SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
@@ -459,7 +463,13 @@ div[data-testid="stSidebar"] .nav-link:hover {
 
 </style>
 """
+[data-testid="stSidebar"] {
+    background-color: #f8f9fa;
+}
 
+[data-testid="stSidebar"] * {
+    color: #333;
+}
 st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
 # ===========================
