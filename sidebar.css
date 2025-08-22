@@ -1,0 +1,8 @@
+/* Sidebar styling */
+[data-testid="stSidebar"] {
+    background-color: #f8f9fa;
+}
+
+[data-testid="stSidebar"] * {
+    color: #333;
+}
