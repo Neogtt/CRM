@@ -10,11 +10,20 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload, MediaIoBaseDownload
 from googleapiclient.errors import HttpError
+from streamlit_option_menu import option_menu
 
 # ===========================
 # ==== GENEL AYARLAR
 # ===========================
 st.set_page_config(page_title="ŞEKEROĞLU İHRACAT CRM", layout="wide")
+
+# Load Bootstrap Icons for consistent menu visuals
+st.markdown(
+    '<link rel="stylesheet" '
+    'href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">',
+    unsafe_allow_html=True,
+)
+
 
 # Sabitler (Kullanacağımız Drive klasörleri ve Sheets)
 SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
@@ -353,42 +362,44 @@ def write_customers_to_gsheet(df: pd.DataFrame):
 # ==== ŞIK SIDEBAR MENÜ
 # ===========================
 menuler = [
-    ("Özet Ekran","📊"),
-    ("Cari Ekleme","🧑‍💼"),
-    ("Müşteri Listesi","📒"),
-    ("Görüşme / Arama / Ziyaret Kayıtları","☎️"),
-    ("Fiyat Teklifleri","💰"),
-    ("Proforma Takibi","📄"),
-    ("Güncel Sipariş Durumu","🚚"),
-    ("Fatura & İhracat Evrakları","📑"),
-    ("Vade Takibi","⏰"),
-    ("ETA Takibi","🛳️"),
-    ("Fuar Müşteri Kayıtları","🎫"),
-    ("Medya Çekmecesi","🗂️"),
-    ("Satış Performansı","📈"),
+    ("Özet Ekran", "bar-chart"),
+    ("Cari Ekleme", "person-plus"),
+    ("Müşteri Listesi", "people"),
+    ("Görüşme / Arama / Ziyaret Kayıtları", "telephone"),
+    ("Fiyat Teklifleri", "currency-dollar"),
+    ("Proforma Takibi", "file-earmark-text"),
+    ("Güncel Sipariş Durumu", "truck"),
+    ("Fatura & İhracat Evrakları", "file-earmark"),
+    ("Vade Takibi", "clock"),
+    ("ETA Takibi", "calendar-event"),
+    ("Fuar Müşteri Kayıtları", "ticket"),
+    ("Medya Çekmecesi", "folder"),
+    ("Satış Performansı", "graph-up"),
 ]
 
 if st.session_state.user == "Boss":
-    allowed_menus = [("Özet Ekran","📊")]
+    allowed_menus = [("Özet Ekran", "bar-chart")]
 else:
     allowed_menus = menuler
 
-labels = [f"{i} {n}" for (n,i) in allowed_menus]
-name_by_label = {f"{i} {n}": n for (n,i) in allowed_menus}
-label_by_name = {n: f"{i} {n}" for (n,i) in allowed_menus}
+menu_names = [n for n, _ in allowed_menus]
+menu_icons = [i for _, i in allowed_menus]
 
-if "menu_state" not in st.session_state:
-    st.session_state.menu_state = allowed_menus[0][0]
+if "menu_state" not in st.session_state or st.session_state.menu_state not in menu_names:
+    st.session_state.menu_state = menu_names[0]
 
-def _on_menu_change():
-    sel_label = st.session_state.menu_radio_label
-    st.session_state.menu_state = name_by_label.get(sel_label, allowed_menus[0][0])
+default_idx = menu_names.index(st.session_state.menu_state)
 
-current_label = label_by_name.get(st.session_state.menu_state, labels[0])
-current_index = labels.index(current_label) if current_label in labels else 0
-st.sidebar.radio("Menü", labels, index=current_index, label_visibility="collapsed",
-                 key="menu_radio_label", on_change=_on_menu_change)
+with st.sidebar:
+    selected = option_menu(
+        menu_title=None,
+        options=menu_names,
+        icons=menu_icons,
+        default_index=default_idx,
+        key="menu_option_menu",
+    )
 
+st.session_state.menu_state = selected
 menu = st.session_state.menu_state
 
 # Sidebar: manuel senkron
