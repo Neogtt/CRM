@@ -24,6 +24,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Load custom sidebar styles
+with open("css/sidebar.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 
 # Sabitler (Kullanacağımız Drive klasörleri ve Sheets)
 SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
@@ -390,6 +394,10 @@ if "menu_state" not in st.session_state or st.session_state.menu_state not in me
 
 default_idx = menu_names.index(st.session_state.menu_state)
 
+# Display company logo above the menu if available
+if os.path.exists(LOGO_LOCAL_NAME):
+    st.sidebar.image(LOGO_LOCAL_NAME, use_column_width=True)
+
 with st.sidebar:
     selected = option_menu(
         menu_title=None,
@@ -406,6 +414,31 @@ menu = st.session_state.menu_state
 with st.sidebar.expander("🔄 Sheets Senkron"):
     if st.button("Müşterileri Sheets’e Yaz"):
         push_customers_throttled()
+
+/* Sidebar custom styling adhering to corporate guidelines */
+
+/* Sidebar container */
+div[data-testid="stSidebar"] {
+    background-color: #003366; /* corporate blue */
+}
+
+/* Typography */
+div[data-testid="stSidebar"] * {
+    font-family: "Helvetica", sans-serif;
+    color: #FFFFFF;
+}
+
+/* Option menu item styling */
+div[data-testid="stSidebar"] .nav-link {
+    color: #FFFFFF;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover effect for menu items */
+div[data-testid="stSidebar"] .nav-link:hover {
+    background-color: #0059b3;
+    color: #FFFFFF;
+}
 
 # ===========================
 # ==== E-POSTA (Cari açılış)
