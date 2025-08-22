@@ -400,7 +400,7 @@ menuler = [
   {"label": "Medya Çekmecesi", "icon": "folder"},
   {"label": "Satış Performansı", "icon": "graph-up"}
 ]
-if st.session_state.user = "Boss":
+if st.session_state.user == "Boss":
     allowed_menus = [("Özet Ekran", "bar-chart")]
 else:
     allowed_menus = menuler
@@ -463,13 +463,7 @@ div[data-testid="stSidebar"] .nav-link:hover {
 
 </style>
 """
-[data-testid="stSidebar"] {
-    background-color: #f8f9fa;
-}
 
-[data-testid="stSidebar"] * {
-    color: #333;
-}
 st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
 # ===========================
