@@ -1,8 +1,24 @@
-/* Sidebar styling */
-[data-testid="stSidebar"] {
-    background-color: #f8f9fa;
+/* Sidebar custom styling adhering to corporate guidelines */
+
+/* Sidebar container */
+div[data-testid="stSidebar"] {
+    background-color: #003366; /* corporate blue */
 }
 
-[data-testid="stSidebar"] * {
-    color: #333;
+/* Typography */
+div[data-testid="stSidebar"] * {
+    font-family: "Helvetica", sans-serif;
+    color: #FFFFFF;
+}
+
+/* Option menu item styling */
+div[data-testid="stSidebar"] .nav-link {
+    color: #FFFFFF;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover effect for menu items */
+div[data-testid="stSidebar"] .nav-link:hover {
+    background-color: #0059b3;
+    color: #FFFFFF;
 }
