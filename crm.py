@@ -384,6 +384,10 @@ def push_customers_throttled(cooldown: int = 10):
     except Exception as e:
         st.error(f"Google Sheets güncellemesi başarısız: {e}")
 
+ def _sanitize_vade(value):
+            numeric_value = pd.to_numeric(value, errors="coerce")
+            return int(numeric_value) if pd.notna(numeric_value) else 0
+
 # ===========================
 # ==== ŞIK SIDEBAR MENÜ
 # ===========================
@@ -755,10 +759,7 @@ elif menu == "Müşteri Listesi":
             "Düzenlemek istediğiniz müşteri kaydını seçiniz:",
             df_musteri.index,
             format_func=lambda i: f"{df_musteri.at[i, 'Müşteri Adı']} ({df_musteri.at[i, 'Ülke']})"
-        )
-         def _sanitize_vade(value):
-            numeric_value = pd.to_numeric(value, errors="coerce")
-            return int(numeric_value) if pd.notna(numeric_value) else 0
+         )
             
         with st.form("edit_customer"):
             name = st.text_input("Müşteri Adı", value=df_musteri.at[secili_index_edit, "Müşteri Adı"])
