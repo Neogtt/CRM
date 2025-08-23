@@ -384,9 +384,9 @@ def push_customers_throttled(cooldown: int = 10):
     except Exception as e:
         st.error(f"Google Sheets güncellemesi başarısız: {e}")
 
- def _sanitize_vade(value):
-            numeric_value = pd.to_numeric(value, errors="coerce")
-            return int(numeric_value) if pd.notna(numeric_value) else 0
+def _sanitize_vade(value):
+    numeric_value = pd.to_numeric(value, errors="coerce")
+    return int(numeric_value) if pd.notna(numeric_value) else 0
 
 # ===========================
 # ==== ŞIK SIDEBAR MENÜ
