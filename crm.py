@@ -407,21 +407,6 @@ menuler = [
     ("Satış Performansı", "graph-up"),
 ]
 
-[
-  {"label": "Özet Ekran", "icon": "bar-chart"},
-  {"label": "Cari Ekleme", "icon": "person-plus"},
-  {"label": "Müşteri Listesi", "icon": "people"},
-  {"label": "Görüşme / Arama / Ziyaret Kayıtları", "icon": "telephone"},
-  {"label": "Fiyat Teklifleri", "icon": "currency-dollar"},
-  {"label": "Proforma Takibi", "icon": "file-earmark-text"},
-  {"label": "Güncel Sipariş Durumu", "icon": "truck"},
-  {"label": "Fatura & İhracat Evrakları", "icon": "file-earmark"},
-  {"label": "Vade Takibi", "icon": "clock"},
-  {"label": "ETA Takibi", "icon": "calendar-event"},
-  {"label": "Fuar Müşteri Kayıtları", "icon": "ticket"},
-  {"label": "Medya Çekmecesi", "icon": "folder"},
-  {"label": "Satış Performansı", "icon": "graph-up"}
-]
 if st.session_state.user == "Boss":
     allowed_menus = [("Özet Ekran", "bar-chart")]
 else:
