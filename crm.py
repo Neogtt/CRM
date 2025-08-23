@@ -33,6 +33,7 @@ try:
 except FileNotFoundError:
     st.warning("Sidebar CSS not found; using default styles")
 
+
 # Sabitler (Kullanacağımız Drive klasörleri ve Sheets)
 SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
 MUSTERI_SHEET_NAME = "Sayfa1"
