@@ -366,6 +366,24 @@ def write_customers_to_gsheet(df: pd.DataFrame):
     )
     return execute_with_retry(request)
 
+def push_customers_throttled(cooldown: int = 10):
+    """Push customers to Google Sheets with a simple cooldown."""
+    if "last_customer_push" not in st.session_state:
+        st.session_state.last_customer_push = 0.0
+
+    elapsed = time.time() - st.session_state.last_customer_push
+    if elapsed < cooldown:
+        remaining = int(cooldown - elapsed)
+        st.info(f"Lütfen {remaining} saniye sonra tekrar deneyin.")
+        return
+
+    try:
+        write_customers_to_gsheet(df_musteri)
+        st.success("Müşteriler Google Sheets'e yazıldı!")
+        st.session_state.last_customer_push = time.time()
+    except Exception as e:
+        st.error(f"Google Sheets güncellemesi başarısız: {e}")
+
 # ===========================
 # ==== ŞIK SIDEBAR MENÜ
 # ===========================
