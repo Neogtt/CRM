@@ -756,6 +756,10 @@ elif menu == "Müşteri Listesi":
             df_musteri.index,
             format_func=lambda i: f"{df_musteri.at[i, 'Müşteri Adı']} ({df_musteri.at[i, 'Ülke']})"
         )
+         def _sanitize_vade(value):
+            numeric_value = pd.to_numeric(value, errors="coerce")
+            return int(numeric_value) if pd.notna(numeric_value) else 0
+            
         with st.form("edit_customer"):
             name = st.text_input("Müşteri Adı", value=df_musteri.at[secili_index_edit, "Müşteri Adı"])
             phone = st.text_input("Telefon", value=df_musteri.at[secili_index_edit, "Telefon"])
@@ -773,8 +777,9 @@ elif menu == "Müşteri Listesi":
             aktif_pasif = st.selectbox("Durum", ["Aktif", "Pasif"],
                                        index=["Aktif", "Pasif"].index(df_musteri.at[secili_index_edit, "Durum"])
                                        if df_musteri.at[secili_index_edit, "Durum"] in ["Aktif", "Pasif"] else 0)
+            vade_sanitized = _sanitize_vade(df_musteri.at[secili_index_edit, "Vade (Gün)"])
             vade_gun = st.number_input("Vade (Gün Sayısı)", min_value=0, max_value=365,
-                                       value=int(df_musteri.at[secili_index_edit, "Vade (Gün)"]) if pd.notna(df_musteri.at[secili_index_edit, "Vade (Gün)"]) else 0)
+                                       value=vade_sanitized)
             odeme_sekli = st.selectbox("Ödeme Şekli", ["Peşin", "Mal Mukabili", "Vesaik Mukabili", "Akreditif", "Diğer"],
                                        index=["Peşin", "Mal Mukabili", "Vesaik Mukabili", "Akreditif", "Diğer"].index(df_musteri.at[secili_index_edit, "Ödeme Şekli"])
                                        if df_musteri.at[secili_index_edit, "Ödeme Şekli"] in ["Peşin", "Mal Mukabili", "Vesaik Mukabili", "Akreditif", "Diğer"] else 0)
