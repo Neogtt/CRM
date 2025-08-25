@@ -26,14 +26,13 @@ st.markdown(
 )
 
 # Load custom sidebar styles
-css_path = Path(__file__).parent / "css" / "sidebar.css"
-try:
-    with css_path.open() as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-except FileNotFoundError:
-    st.warning("Sidebar CSS not found; using default styles")
 
+sidebar_css = Path(__file__).resolve().parent / "css" / "sidebar.css"
+with sidebar_css.open() as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    
 # Sabitler (Kullanacağımız Drive klasörleri ve Sheets)
+
 SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
 MUSTERI_SHEET_NAME = "Sayfa1"
 
@@ -440,38 +439,6 @@ menu = st.session_state.menu_state
 with st.sidebar.expander("🔄 Sheets Senkron"):
     if st.button("Müşterileri Sheets’e Yaz"):
         push_customers_throttled()
-        
-SIDEBAR_CSS = """
-<style>
-/* Sidebar custom styling adhering to corporate guidelines */
-
-/* Sidebar container */
-div[data-testid="stSidebar"] {
-    background-color: #003366; /* corporate blue */
-}
-
-/* Typography */
-div[data-testid="stSidebar"] * {
-    font-family: "Helvetica", sans-serif;
-    color: #FFFFFF;
-}
-
-/* Option menu item styling */
-div[data-testid="stSidebar"] .nav-link {
-    color: #FFFFFF;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Hover effect for menu items */
-div[data-testid="stSidebar"] .nav-link:hover {
-    background-color: #0059b3;
-    color: #FFFFFF;
-}
-
-</style>
-"""
-
-st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
 # ===========================
 # ==== E-POSTA (Cari açılış)
