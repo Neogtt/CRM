@@ -27,7 +27,7 @@ st.markdown(
 
 # Load custom sidebar styles
 
-sidebar_css = Path(__file__).parent / "css" / "sidebar.css"
+sidebar_css = Path(__file__).resolve().parent / "css" / "sidebar.css"
 with sidebar_css.open() as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     
