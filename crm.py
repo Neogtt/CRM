@@ -1612,7 +1612,7 @@ elif menu == "ETA Takibi":
         df_eta["Kalan Gün"] = df_eta["Kalan Gün"].astype("Int64")
 
         def highlight_days(val):
-             if pd.isna(val):
+            if pd.isna(val):
                 return ''
             if val < 0:
                 return 'background-color: #ffcccc;'  # kırmızı
@@ -1621,7 +1621,6 @@ elif menu == "ETA Takibi":
             else:
                 return 'background-color: #d4edda;'  # yeşil
                 
-       
         tablo = df_eta[["Müşteri Adı", "Proforma No", "ETA Tarihi", "Kalan Gün", "Açıklama"]].copy()
         tablo = tablo.sort_values(["ETA Tarihi", "Müşteri Adı", "Proforma No"], ascending=[True, True, True])
         
@@ -1726,6 +1725,9 @@ elif menu == "Fuar Müşteri Kayıtları":
     st.markdown("<h2 style='color:#8e54e9; font-weight:bold; text-align:center;'>🎫 FUAR MÜŞTERİ KAYITLARI</h2>", unsafe_allow_html=True)
     st.info("Fuarlarda müşteri görüşmelerinizi hızlıca buraya ekleyin. Hem yeni kayıt oluşturabilir hem de mevcut kayıtlarınızı düzenleyebilirsiniz.")
 
+    # Ensure the fair customer dataframe is available locally
+    df_fuar_musteri = df_fuar.copy()
+
     fuar_isimleri = list(df_fuar_musteri["Fuar Adı"].dropna().unique())
     yeni_fuar = st.text_input("Yeni Fuar Adı Ekleyin (Eklemek istemiyorsanız boş bırakın):").strip()
     if yeni_fuar and yeni_fuar not in fuar_isimleri:
@@ -1762,6 +1764,7 @@ elif menu == "Fuar Müşteri Kayıtları":
                         "Görüşme Kalitesi": int(gorusme_kalitesi), "Tarih": pd.to_datetime(tarih)
                     }
                     df_fuar_musteri = pd.concat([df_fuar_musteri, pd.DataFrame([new_row])], ignore_index=True)
+                    df_fuar = df_fuar_musteri
                     update_excel()
                     st.success("Fuar müşterisi başarıyla eklendi!")
                     st.rerun()
@@ -1806,12 +1809,14 @@ elif menu == "Fuar Müşteri Kayıtları":
                 df_fuar_musteri.loc[secili_index, kolonlar] = [
                     musteri_adi, ulke, tel, email, temsilci, aciklama, int(gorusme_kalitesi), pd.to_datetime(tarih)
                 ]
+                df_fuar = df_fuar_musteri
                 update_excel()
                 st.success("Kayıt güncellendi!")
                 st.rerun()
 
             if sil:
                 df_fuar_musteri = df_fuar_musteri.drop(secili_index).reset_index(drop=True)
+                df_fuar = df_fuar_musteri
                 update_excel()
                 st.success("Kayıt silindi!")
                 st.rerun()
