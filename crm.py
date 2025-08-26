@@ -1612,7 +1612,7 @@ elif menu == "ETA Takibi":
         df_eta["Kalan Gün"] = df_eta["Kalan Gün"].astype("Int64")
 
         def highlight_days(val):
-            if val == "" or pd.isna(val):
+             if pd.isna(val):
                 return ''
             if val < 0:
                 return 'background-color: #ffcccc;'  # kırmızı
@@ -1621,10 +1621,16 @@ elif menu == "ETA Takibi":
             else:
                 return 'background-color: #d4edda;'  # yeşil
                 
-        df_eta["Kalan Gün"] = df_eta["Kalan Gün"].fillna("")
+       
         tablo = df_eta[["Müşteri Adı", "Proforma No", "ETA Tarihi", "Kalan Gün", "Açıklama"]].copy()
         tablo = tablo.sort_values(["ETA Tarihi", "Müşteri Adı", "Proforma No"], ascending=[True, True, True])
-        st.dataframe(tablo.style.applymap(highlight_days, subset=["Kalan Gün"]), use_container_width=True)
+        
+        styler = (
+            tablo.style
+            .applymap(highlight_days, subset=["Kalan Gün"])
+            .format({"Kalan Gün": lambda x: "" if pd.isna(x) else f"{x}"})
+        )
+        st.dataframe(styler, use_container_width=True)
 
         st.markdown("##### ETA Kaydı Sil")
         silinecekler = df_eta.index.tolist()
