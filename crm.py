@@ -1351,9 +1351,13 @@ elif menu == "Vade Takibi":
     today = pd.to_datetime(datetime.date.today())
     vade_df = df_evrak[df_evrak["Vade Tarihi"].notna() & (~df_evrak["Ödendi"])].reset_index()
 
+     # Sadece ödenmemiş ve vadeli kayıtlar
+    vade_df = df_evrak[df_evrak["Vade Tarihi"].notna() & (~df_evrak["Ödendi"])].reset_index()
+
     if vade_df.empty:
         st.info("Açık vade kaydı yok.")
     else:
+        # Her satır için bilgi + ödeme kanıtı yükleme + Ödendi checkbox
         for i, row in vade_df.iterrows():
             kalan = (row["Vade Tarihi"] - today).days
             mesaj = (
@@ -1361,16 +1365,26 @@ elif menu == "Vade Takibi":
                 f"| Proforma No: {row.get('Proforma No','')} | Fatura No: {row['Fatura No']} "
                 f"| Vade Tarihi: {row['Vade Tarihi'].date()} | Ödeme: {row.get('Ödeme Şekli','')}"
             )
+
             box = st.container(border=True)
             with box:
-                if kalan == 1: st.error(f"{mesaj} | **YARIN VADE DOLUYOR!**")
-                elif kalan < 0: st.warning(f"{mesaj} | **{abs(kalan)} gün GECİKTİ!**")
-                else: st.info(f"{mesaj} | {kalan} gün kaldı.")
+                if kalan == 1:
+                    st.error(f"{mesaj} | **YARIN VADE DOLUYOR!**")
+                elif kalan < 0:
+                    st.warning(f"{mesaj} | **{abs(kalan)} gün GECİKTİ!**")
+                else:
+                    st.info(f"{mesaj} | {kalan} gün kaldı.")
 
-                kanit_file = st.file_uploader("Ödeme Kanıtı (PDF/JPG/PNG/JPEG/WEBP)",
-                                              type=["pdf","jpg","jpeg","png","webp"], key=f"kanit_{i}")
-                prev_link = row.get("Ödeme Kanıtı","")
-                if prev_link: 
+                # Ödeme kanıtı uploader (çoklu format)
+                kanit_file = st.file_uploader(
+                    "Ödeme Kanıtı (PDF/JPG/PNG/JPEG/WEBP)",
+                    type=["pdf", "jpg", "jpeg", "png", "webp"],
+                    key=f"kanit_{i}"
+                )
+
+                # Daha önce yüklenmiş link varsa göster
+                prev_link = row.get("Ödeme Kanıtı", "")
+                if prev_link:
                     st.markdown(f"[Önceden yüklenmiş ödeme kanıtı]({prev_link})", unsafe_allow_html=True)
 
                 tick = st.checkbox(
@@ -1379,23 +1393,54 @@ elif menu == "Vade Takibi":
                 )
 
                 if tick:
+                    # Kanıt zorunlu
                     if kanit_file is None and not prev_link:
                         st.error("Lütfen önce **Ödeme Kanıtı** dosyası yükleyin (PDF/JPG/PNG…).")
                     else:
+                        # Eğer yeni dosya geldiyse Drive'a yükle
                         odeme_kaniti_url = prev_link
                         if kanit_file is not None:
+                            if not ROOT_EXPORT_FOLDER_ID:
+                                st.error("Ana klasör ID tanımlı değil; yükleme iptal edildi.")
+                                st.stop()
+
                             cust_folder_id = get_or_create_customer_folder(row["Müşteri Adı"], ROOT_EXPORT_FOLDER_ID)
-                            kanit_folder_id = get_or_create_child_folder("Odeme_Kanitlari", cust_folder_id)
+                            if not cust_folder_id:
+                                st.error("Müşteri klasörü oluşturulamadı; yükleme iptal edildi.")
+                                st.stop()
+
+                            # Müşteri altında 'Odeme_Kanitlari' alt klasörü
+                            kanit_folder_id = get_or_create_folder_by_name("Odeme_Kanitlari", cust_folder_id)
+                            if not kanit_folder_id:
+                                st.error("Ödeme kanıtı klasörü oluşturulamadı; yükleme iptal edildi.")
+                                st.stop()
+
+                            # Dosyayı geçici kaydet ve yükle
                             suffix = os.path.splitext(kanit_file.name)[1].lower() or ".pdf"
                             ts = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+                            fname = safe_name(f"OdemeKaniti__{row['Müşteri Adı']}__{row.get('Proforma No','')}__{row['Fatura No']}__{ts}") + suffix
 
-                            # ✅ HATA DÜZELTİLDİ (string kapatıldı + güvenli isimlendirme)
-                            fname = safe_name(
-                                f"OdemeKaniti__{row['Müşteri Adı']}__{row['Proforma No']}__{row['Fatura No']}__{ts}"
-                            ) + suffix
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as fp:
+                                fp.write(kanit_file.read())
+                                temp_path = fp.name
 
-                            odeme_kaniti_url = upload_bytes_to_folder(kanit_folder_id, fname, kanit_file.getvalue())
+                            meta = {
+                                'title': fname,
+                                'parents': [{'id': kanit_folder_id}],
+                            }
+                            gfile = drive.CreateFile(meta)
+                            gfile.SetContentFile(temp_path)
+                            try:
+                                # supportsAllDrives => Shared Drive desteği
+                                gfile.Upload(param={'supportsAllDrives': True})
+                                odeme_kaniti_url = f"https://drive.google.com/file/d/{gfile['id']}/view?usp=sharing"
+                            except Exception as e:
+                                st.error(f"Ödeme kanıtı yüklenirken hata: {e}")
+                            finally:
+                                try: os.remove(temp_path)
+                                except: pass
 
+                        # Kayıt güncelle: kanıt linki + Ödendi = True
                         df_evrak.at[row['index'], "Ödeme Kanıtı"] = odeme_kaniti_url
                         df_evrak.at[row['index'], "Ödendi"] = True
                         update_excel()
@@ -1404,8 +1449,10 @@ elif menu == "Vade Takibi":
 
         st.markdown("#### Açık Vade Kayıtları")
         st.dataframe(
-            df_evrak[df_evrak["Vade Tarihi"].notna() & (~df_evrak["Ödendi"])]
-            [["Müşteri Adı","Ülke","Satış Temsilcisi","Ödeme Şekli","Proforma No","Fatura No","Fatura Tarihi","Vade (gün)","Vade Tarihi","Tutar"]],
+            df_evrak[
+                df_evrak["Vade Tarihi"].notna() & (~df_evrak["Ödendi"])
+            ][["Müşteri Adı", "Ülke", "Satış Temsilcisi", "Ödeme Şekli",
+               "Proforma No", "Fatura No", "Fatura Tarihi", "Vade (gün)", "Vade Tarihi", "Tutar"]],
             use_container_width=True
         )
 
