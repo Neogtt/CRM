@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import io, os, re, time, tempfile, datetime, mimetypes, json
+import io, os, re, time, tempfile, datetime, mimetypes, json, logging
 from email.message import EmailMessage
 import smtplib
 from typing import Tuple
@@ -28,8 +28,11 @@ st.markdown(
 # Load custom sidebar styles
 
 sidebar_css = Path(__file__).resolve().parent / "css" / "sidebar.css"
-with sidebar_css.open() as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+if sidebar_css.exists():
+    with sidebar_css.open() as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+else:
+    logging.warning("Sidebar CSS file not found at %s", sidebar_css)
     
 # Sabitler (Kullanacağımız Drive klasörleri ve Sheets)
 
