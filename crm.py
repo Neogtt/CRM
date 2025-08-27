@@ -98,10 +98,13 @@ toplam_bekleyen = pd.to_numeric(bekleyen.get("Tutar", []), errors="coerce").sum(
 
 # --- Vade Takibi (Evraklar) ---
 if not df_evrak.empty:
+    df_evrak["Fatura Tarihi"] = pd.to_datetime(df_evrak.iloc[:,2], errors="coerce")  # C sütunu
     df_evrak["Vade Tarihi"]   = pd.to_datetime(df_evrak.iloc[:,3], errors="coerce")  # D sütunu
     df_evrak["Tutar"]         = pd.to_numeric(df_evrak.iloc[:,4], errors="coerce")  # E sütunu
     df_evrak["Ödendi"]        = df_evrak.iloc[:,14]  # O sütunu
+
     vade = df_evrak[(df_evrak["Ödendi"] != True) & (df_evrak["Vade Tarihi"].notna())].copy()
+    vade["Kalan Gün"] = (vade["Vade Tarihi"].dt.date - bugun).dt.days
 
     gecmis = vade[vade["Vade Tarihi"].dt.date < bugun]
     gelecek = vade[vade["Vade Tarihi"].dt.date >= bugun]
@@ -112,7 +115,12 @@ else:
     toplam_geciken = toplam_gelecek = 0
 
 # --- ETA Takibi ---
-eta_sayi = len(df_eta) if not df_eta.empty else 0
+if not df_eta.empty:
+    df_eta["ETA Tarihi"] = pd.to_datetime(df_eta.iloc[:,1], errors="coerce")  # B sütunu
+    df_eta["Kalan Gün"] = (df_eta["ETA Tarihi"].dt.date - bugun).dt.days
+    eta_sayi = len(df_eta)
+else:
+    eta_sayi = 0
 
 # ===========================
 # ==== ÖZET KUTULAR
@@ -149,19 +157,18 @@ else:
 st.markdown("### 💰 Vade Takibi")
 if toplam_geciken > 0:
     st.subheader("⏳ Geciken Ödemeler")
-    st.dataframe(gecmis[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar"]],
+    st.dataframe(gecmis[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]],
                  use_container_width=True)
 
 if toplam_gelecek > 0:
     st.subheader("📅 Yaklaşan Vadeler")
-    st.dataframe(gelecek[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar"]],
+    st.dataframe(gelecek[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]],
                  use_container_width=True)
 
 # ETA
 st.markdown("### 🛳️ ETA Takibi")
 if not df_eta.empty:
-    df_eta["ETA Tarihi"] = pd.to_datetime(df_eta.iloc[:,1], errors="coerce")  # B sütunu
     df_eta["ETA Günü"] = df_eta["ETA Tarihi"].dt.strftime("%d/%m/%Y")
-    st.dataframe(df_eta[["Müşteri Adı","Proforma No","ETA Günü","Açıklama"]], use_container_width=True)
+    st.dataframe(df_eta[["Müşteri Adı","Proforma No","ETA Günü","Kalan Gün","Açıklama"]], use_container_width=True)
 else:
     st.info("ETA sayfasında veri yok.")
