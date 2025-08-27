@@ -5,18 +5,16 @@ import numpy as np
 import datetime
 import os
 
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-
 # ======================
 # CONFIG
 # ======================
 st.set_page_config(page_title="ŞEKEROĞLU CRM Özet", layout="wide")
 
-SHEET_ID = "1F6CN4oHEMk6IEE40ZGixPkfnNHLYXnQ"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1F6CN4oHEMk6IEE40ZGixPkfnNHLYXnQ/export?format=xlsx"
 LOCAL_FILE = "D:/APP/temp.xlsx"
 
 USERS = {"Boss": "Seker12345!"}
+bugun = datetime.date.today()
 
 # ======================
 # LOGIN
@@ -39,56 +37,37 @@ if not st.session_state.user:
     login_screen()
     st.stop()
 
-# ===========================
-# ==== GOOGLE DRIVE API
-# ===========================
-@st.cache_resource
-def build_drive():
-    creds = service_account.Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"],
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
-
-drive_svc = build_drive()
-
-def download_excel_file(file_id, local_path="temp.xlsx"):
-    try:
-        request = drive_svc.files().get_media(fileId=file_id)
-        fh = io.FileIO(local_path, "wb")
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
-        return local_path
-    except Exception as e:
-        st.warning(f"Drive’dan indirilemedi, local dosya kullanılacak. ({e})")
-        return None
-        
 # ======================
 # LOAD DATA
 # ======================
 def load_data():
-    # Önce Drive’dan oku
-    df_proforma = read_sheet("Proformalar")
-    df_evrak    = read_sheet("Evraklar")
-    df_eta      = read_sheet("ETA")
+    df_proforma, df_evrak, df_eta = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+    # Öncelik: Drive’daki Excel
+    try:
+        xl = pd.ExcelFile(SHEET_URL)
+        if "Proformalar" in xl.sheet_names:
+            df_proforma = xl.parse("Proformalar")
+        if "Evraklar" in xl.sheet_names:
+            df_evrak = xl.parse("Evraklar")
+        if "ETA" in xl.sheet_names:
+            df_eta = xl.parse("ETA")
+    except Exception as e:
+        st.warning(f"Google Drive Excel okunamadı: {e}")
 
     # Eğer boşsa local fallback
-    if df_proforma.empty or df_evrak.empty or df_eta.empty:
-        if os.path.exists(LOCAL_FILE):
-            xl = pd.ExcelFile(LOCAL_FILE)
-            if df_proforma.empty and "Proformalar" in xl.sheet_names:
-                df_proforma = xl.parse("Proformalar")
-            if df_evrak.empty and "Evraklar" in xl.sheet_names:
-                df_evrak = xl.parse("Evraklar")
-            if df_eta.empty and "ETA" in xl.sheet_names:
-                df_eta = xl.parse("ETA")
+    if (df_proforma.empty or df_evrak.empty or df_eta.empty) and os.path.exists(LOCAL_FILE):
+        xl = pd.ExcelFile(LOCAL_FILE)
+        if df_proforma.empty and "Proformalar" in xl.sheet_names:
+            df_proforma = xl.parse("Proformalar")
+        if df_evrak.empty and "Evraklar" in xl.sheet_names:
+            df_evrak = xl.parse("Evraklar")
+        if df_eta.empty and "ETA" in xl.sheet_names:
+            df_eta = xl.parse("ETA")
 
     return df_proforma, df_evrak, df_eta
 
 df_proforma, df_evrak, df_eta = load_data()
-bugun = datetime.date.today()
 
 # ======================
 # ÖZET DASHBOARD
@@ -116,7 +95,7 @@ if not df_evrak.empty:
     df_evrak["Vade Tarihi"]   = pd.to_datetime(df_evrak.iloc[:,3], errors="coerce")  # D sütunu
     df_evrak["Tutar"]         = pd.to_numeric(df_evrak.iloc[:,4], errors="coerce")  # E sütunu
     df_evrak["Ödendi"]        = df_evrak.iloc[:,14]  # O sütunu
-    vade = df_evrak[(df_evrak["Ödendi"] != "TRUE") & (df_evrak["Vade Tarihi"].notna())].copy()
+    vade = df_evrak[(df_evrak["Ödendi"] != True) & (df_evrak["Vade Tarihi"].notna())].copy()
 
     vade["Kalan Gün"] = (vade["Vade Tarihi"].dt.date - bugun).dt.days
 
