@@ -139,3 +139,39 @@ if teslim.empty:
 else:
     teslim["Tarih"] = pd.to_datetime(teslim["Tarih"], errors="coerce").dt.strftime("%d/%m/%Y").fillna("")
     st.dataframe(teslim[["Müşteri Adı","Ülke","Proforma No","Tarih","Tutar"]].sort_values(by="Tarih", ascending=False).head(5), use_container_width=True)
+
+
+# --- Vade Takibi ---
+st.subheader("💰 Vade Takibi")
+
+if "Vade (gün)" in df_proforma.columns:
+    df_vade = df_proforma.copy()
+    df_vade["Tarih"] = pd.to_datetime(df_vade["Tarih"], errors="coerce")
+    df_vade["Vade (gün)"] = pd.to_numeric(df_vade["Vade (gün)"], errors="coerce")
+    df_vade["Vade Tarihi"] = df_vade["Tarih"] + pd.to_timedelta(df_vade["Vade (gün)"], unit="D")
+
+    bugun = datetime.date.today()
+    df_vade["Durum_Vade"] = np.where(
+        df_vade["Vade Tarihi"].dt.date < bugun, "⚠️ Gecikti",
+        np.where(df_vade["Vade Tarihi"].dt.date == bugun, "⏳ Bugün", "✅ Beklemede")
+    )
+
+    st.dataframe(
+        df_vade[["Müşteri Adı","Proforma No","Tarih","Vade (gün)","Vade Tarihi","Tutar","Durum_Vade"]],
+        use_container_width=True
+    )
+
+    # Ekstra özet kutucuklar
+    toplam_bekleyen = df_vade[df_vade["Durum_Vade"]=="✅ Beklemede"]["Tutar"].astype(float).sum()
+    toplam_gecikmis = df_vade[df_vade["Durum_Vade"]=="⚠️ Gecikti"]["Tutar"].astype(float).sum()
+
+    st.markdown(f"""
+        <div style='font-size:1.1em; color:#219A41; font-weight:bold;'>
+            Bekleyen Vade Toplamı: {toplam_bekleyen:,.2f} $
+        </div>
+        <div style='font-size:1.1em; color:#e74c3c; font-weight:bold;'>
+            Gecikmiş Vade Toplamı: {toplam_gecikmis:,.2f} $
+        </div>
+    """, unsafe_allow_html=True)
+else:
+    st.info("Proformalar içinde 'Vade (gün)' alanı bulunamadı.")
