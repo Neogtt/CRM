@@ -13,7 +13,7 @@ from googleapiclient.discovery import build
 st.set_page_config(page_title="ŞEKEROĞLU CRM Özet", layout="wide")
 
 LOCAL_FILE = "temp.xlsx"
-SHEET_ID = "1IF6CN4oHEMk6IEE40ZGixPkfnNHLYXnQ"
+SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
 MUSTERI_SHEET_NAME = "Sayfa1"
 PROFORMA_SHEET_NAME = "Proformalar"
 
