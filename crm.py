@@ -39,33 +39,32 @@ if not st.session_state.user:
     login_screen()
     st.stop()
 
-# ======================
-# GOOGLE SHEETS CONNECT
-# ======================
+# ===========================
+# ==== GOOGLE DRIVE API
+# ===========================
 @st.cache_resource
-def build_sheets():
+def build_drive():
     creds = service_account.Credentials.from_service_account_info(
         st.secrets["gcp_service_account"],
-        scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+        scopes=["https://www.googleapis.com/auth/drive"]
     )
-    return build("sheets", "v4", credentials=creds, cache_discovery=False)
+    return build("drive", "v3", credentials=creds, cache_discovery=False)
 
-sheets_svc = build_sheets()
+drive_svc = build_drive()
 
-def read_sheet(sheet_name):
+def download_excel_file(file_id, local_path="temp.xlsx"):
     try:
-        result = sheets_svc.spreadsheets().values().get(
-            spreadsheetId=SHEET_ID, range=f"{sheet_name}!A:Z"
-        ).execute()
-        values = result.get("values", [])
-        if not values:
-            return pd.DataFrame()
-        header, rows = values[0], values[1:]
-        return pd.DataFrame(rows, columns=header)
+        request = drive_svc.files().get_media(fileId=file_id)
+        fh = io.FileIO(local_path, "wb")
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        return local_path
     except Exception as e:
-        st.warning(f"Google Sheets okunamadı: {e}")
-        return pd.DataFrame()
-
+        st.warning(f"Drive’dan indirilemedi, local dosya kullanılacak. ({e})")
+        return None
+        
 # ======================
 # LOAD DATA
 # ======================
