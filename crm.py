@@ -81,12 +81,19 @@ if not df_evrak.empty and "Vade Tarihi" in df_evrak.columns:
     st.markdown("### ⏰ Vade Takibi")
     df_evrak["Tutar"] = pd.to_numeric(df_evrak.get("Tutar", 0), errors="coerce").fillna(0)
     df_evrak["Vade Tarihi"] = pd.to_datetime(df_evrak["Vade Tarihi"], errors="coerce")
+
+    # 🔑 Ödendi olanları çıkar
+    if "Ödendi" in df_evrak.columns:
+        df_vade = df_evrak[df_evrak["Ödendi"].astype(str).str.lower() != "true"].copy()
+    else:
+        df_vade = df_evrak.copy()
+
     bugun = datetime.date.today()
-    df_evrak["Durum_Vade"] = df_evrak["Vade Tarihi"].apply(
+    df_vade["Durum_Vade"] = df_vade["Vade Tarihi"].apply(
         lambda d: "⏳ Beklemede" if pd.notna(d) and d >= pd.Timestamp(bugun) else (
                    "⚠️ Gecikmiş" if pd.notna(d) and d < pd.Timestamp(bugun) else "❓")
     )
-    st.dataframe(df_evrak[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Durum_Vade"]].tail(10))
+    st.dataframe(df_vade[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Durum_Vade"]].tail(10))
 else:
     st.warning("Evraklar sayfasında 'Vade Tarihi' bilgisi bulunamadı.")
 
