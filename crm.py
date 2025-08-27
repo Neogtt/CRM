@@ -104,7 +104,7 @@ if not df_evrak.empty:
     df_evrak["Ödendi"]        = df_evrak.iloc[:,14]  # O sütunu
 
     vade = df_evrak[(df_evrak["Ödendi"] != True) & (df_evrak["Vade Tarihi"].notna())].copy()
-    vade["Kalan Gün"] = (vade["Vade Tarihi"].dt.date - bugun).dt.days
+    vade["Kalan Gün"] = (vade["Vade Tarihi"] - pd.to_datetime(bugun)).dt.days
 
     gecmis = vade[vade["Vade Tarihi"].dt.date < bugun]
     gelecek = vade[vade["Vade Tarihi"].dt.date >= bugun]
@@ -113,11 +113,12 @@ if not df_evrak.empty:
     toplam_gelecek = gelecek["Tutar"].sum()
 else:
     toplam_geciken = toplam_gelecek = 0
+    vade = pd.DataFrame()
 
 # --- ETA Takibi ---
 if not df_eta.empty:
     df_eta["ETA Tarihi"] = pd.to_datetime(df_eta.iloc[:,1], errors="coerce")  # B sütunu
-    df_eta["Kalan Gün"] = (df_eta["ETA Tarihi"].dt.date - bugun).dt.days
+    df_eta["Kalan Gün"] = (df_eta["ETA Tarihi"] - pd.to_datetime(bugun)).dt.days
     eta_sayi = len(df_eta)
 else:
     eta_sayi = 0
