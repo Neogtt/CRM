@@ -1,108 +1,138 @@
-# crm_summary.py
+# dashboard.py
 import streamlit as st
 import pandas as pd
-import datetime
+import io, datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
 
-# ======================
-# GENEL AYARLAR
-# ======================
-st.set_page_config(page_title="ŞEKEROĞLU ÖZET", layout="wide")
+# ===========================
+# ==== GENEL AYARLAR
+# ===========================
+st.set_page_config(page_title="ŞEKEROĞLU ÖZET DASHBOARD", layout="wide")
 
-SHEET_ID = "1A_gL11UL6JFAoZrMrg92K8bAegeCn_KzwUyU8AWzE_0"
-SAYFA_PROFORMA = "Proformalar"
-SAYFA_EVRAK = "Evraklar"
+# Drive’daki Excel dosyası (CRM ile kullandığın dosya)
+EXCEL_FILE_ID = "1IF6CN4oHEMk6IEE40ZGixPkfnNHLYXnQ"
 
-# ======================
-# KULLANICI GİRİŞİ
-# ======================
+# ===========================
+# ==== KULLANICI GİRİŞİ
+# ===========================
 USERS = {"Boss": "Seker12345!"}
-if "user" not in st.session_state: st.session_state.user = None
+if "user" not in st.session_state:
+    st.session_state.user = None
 
 def login_screen():
-    st.title("Özet Ekran Girişi")
+    st.title("ŞEKEROĞLU - Özet Dashboard")
     u = st.text_input("Kullanıcı Adı")
     p = st.text_input("Şifre", type="password")
-    if st.button("Giriş"):
+    if st.button("Giriş Yap"):
         if u in USERS and p == USERS[u]:
             st.session_state.user = u
             st.rerun()
         else:
-            st.error("Hatalı giriş!")
+            st.error("Kullanıcı adı veya şifre hatalı.")
 
 if not st.session_state.user:
     login_screen()
     st.stop()
 
-# ======================
-# GOOGLE SHEETS BAĞLANTI
-# ======================
+# ===========================
+# ==== GOOGLE DRIVE API
+# ===========================
 @st.cache_resource
-def build_sheets():
+def build_drive():
     creds = service_account.Credentials.from_service_account_info(
         st.secrets["gcp_service_account"],
-        scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+        scopes=["https://www.googleapis.com/auth/drive"]
     )
-    return build("sheets", "v4", credentials=creds, cache_discovery=False)
+    return build("drive", "v3", credentials=creds, cache_discovery=False)
 
-sheets_svc = build_sheets()
+drive_svc = build_drive()
 
-def load_sheet(sheet_name):
-    result = sheets_svc.spreadsheets().values().get(
-        spreadsheetId=SHEET_ID,
-        range=f"{sheet_name}!A:Z"
-    ).execute()
-    values = result.get("values", [])
-    if not values: return pd.DataFrame()
-    return pd.DataFrame(values[1:], columns=values[0])
+def download_excel_file(file_id, local_path="temp.xlsx"):
+    request = drive_svc.files().get_media(fileId=file_id)
+    fh = io.FileIO(local_path, "wb")
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        status, done = downloader.next_chunk()
+    return local_path
 
-df_proforma = load_sheet(SAYFA_PROFORMA)
-df_evrak = load_sheet(SAYFA_EVRAK)
+# ===========================
+# ==== VERİLERİ YÜKLE
+# ===========================
+excel_path = download_excel_file(EXCEL_FILE_ID)
 
-# ======================
-# ÖZET EKRAN
-# ======================
-st.title("📊 ŞEKEROĞLU CRM - Özet Ekran")
+try:
+    df_proforma = pd.read_excel(excel_path, sheet_name="Proformalar")
+except Exception:
+    df_proforma = pd.DataFrame()
 
-# === PROFORMA ÖZET ===
-if not df_proforma.empty:
-    st.markdown("### 📑 Proformalar")
-    df_proforma["Tutar"] = pd.to_numeric(df_proforma.get("Tutar", 0), errors="coerce").fillna(0)
-    toplam = df_proforma["Tutar"].sum()
-    bekleyen = df_proforma[df_proforma["Durum"]=="Beklemede"]["Tutar"].sum()
-    st.info(f"Toplam Proforma: {toplam:,.2f} $ | Bekleyen: {bekleyen:,.2f} $")
-    st.dataframe(df_proforma[["Müşteri Adı","Proforma No","Tarih","Tutar","Durum"]].tail(10))
+try:
+    df_evrak = pd.read_excel(excel_path, sheet_name="Evraklar")
+except Exception:
+    df_evrak = pd.DataFrame()
+
+# ===========================
+# ==== ÖZET DASHBOARD
+# ===========================
+st.title("📊 ŞEKEROĞLU İHRACAT - ÖZET PANEL")
+
+# === Bekleyen Proformalar ===
+st.markdown("### 📝 Bekleyen Proformalar")
+bekleyen = df_proforma[df_proforma.get("Durum", "") == "Beklemede"].copy()
+if not bekleyen.empty:
+    bekleyen["Tarih"] = pd.to_datetime(bekleyen["Tarih"], errors="coerce").dt.strftime("%d/%m/%Y")
+    toplam = pd.to_numeric(bekleyen["Tutar"], errors="coerce").sum()
+    st.markdown(f"**Toplam Bekleyen Tutar:** {toplam:,.2f} $")
+    st.dataframe(bekleyen[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]], use_container_width=True)
 else:
-    st.warning("Proforma bulunamadı.")
+    st.info("Bekleyen proforma yok.")
 
-# === VADE TAKİBİ (Evraklar) ===
+# === Vade Takibi ===
+st.markdown("### 💰 Vade Takibi")
 if not df_evrak.empty and "Vade Tarihi" in df_evrak.columns:
-    st.markdown("### ⏰ Vade Takibi")
-    df_evrak["Tutar"] = pd.to_numeric(df_evrak.get("Tutar", 0), errors="coerce").fillna(0)
-    df_evrak["Vade Tarihi"] = pd.to_datetime(df_evrak["Vade Tarihi"], errors="coerce")
-
-    # 🔑 Ödendi olanları çıkar
-    if "Ödendi" in df_evrak.columns:
-        df_vade = df_evrak[df_evrak["Ödendi"].astype(str).str.lower() != "true"].copy()
-    else:
-        df_vade = df_evrak.copy()
-
     bugun = datetime.date.today()
-    df_vade["Durum_Vade"] = df_vade["Vade Tarihi"].apply(
-        lambda d: "⏳ Beklemede" if pd.notna(d) and d >= pd.Timestamp(bugun) else (
-                   "⚠️ Gecikmiş" if pd.notna(d) and d < pd.Timestamp(bugun) else "❓")
-    )
-    st.dataframe(df_vade[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Durum_Vade"]].tail(10))
-else:
-    st.warning("Evraklar sayfasında 'Vade Tarihi' bilgisi bulunamadı.")
+    df_evrak["Vade Tarihi"] = pd.to_datetime(df_evrak["Vade Tarihi"], errors="coerce")
+    vade = df_evrak[
+        (df_evrak["Ödendi"] != True) &
+        (df_evrak["Vade Tarihi"].notna())
+    ].copy()
+    vade["Vade Günü"] = vade["Vade Tarihi"].dt.strftime("%d/%m/%Y")
+    gecmis = vade[vade["Vade Tarihi"].dt.date < bugun]
+    gelecek = vade[vade["Vade Tarihi"].dt.date >= bugun]
 
-# === ETA TAKİBİ ===
-if not df_proforma.empty and "Sevk Durumu" in df_proforma.columns:
-    st.markdown("### 🛳️ ETA Takibi")
-    sevkedilen = df_proforma[df_proforma["Sevk Durumu"]=="Sevkedildi"].copy()
-    if sevkedilen.empty:
-        st.info("Yolda olan sipariş yok.")
+    st.subheader("⏳ Geciken Ödemeler")
+    if not gecmis.empty:
+        st.dataframe(gecmis[["Müşteri Adı","Proforma No","Fatura No","Vade Günü","Tutar"]], use_container_width=True)
     else:
-        sevkedilen["Tarih"] = pd.to_datetime(sevkedilen["Tarih"], errors="coerce").dt.strftime("%d/%m/%Y")
-        st.dataframe(sevkedilen[["Müşteri Adı","Ülke","Proforma No","Tarih","Tutar","Sevk Durumu"]].tail(10))
+        st.success("Geciken ödeme yok.")
+
+    st.subheader("📅 Yaklaşan Vadeler")
+    if not gelecek.empty:
+        st.dataframe(gelecek[["Müşteri Adı","Proforma No","Fatura No","Vade Günü","Tutar"]], use_container_width=True)
+    else:
+        st.info("Yaklaşan vade yok.")
+else:
+    st.warning("Evraklar sheetinde 'Vade Tarihi' bulunamadı.")
+
+# === ETA Takibi ===
+st.markdown("### 🛳️ ETA Takibi")
+if "Sevk Durumu" in df_proforma.columns:
+    eta_yolda = df_proforma[df_proforma["Sevk Durumu"] == "Sevkedildi"].copy()
+    if not eta_yolda.empty:
+        toplam_eta = pd.to_numeric(eta_yolda["Tutar"], errors="coerce").sum()
+        st.markdown(f"**Yoldaki Toplam Tutar:** {toplam_eta:,.2f} $")
+        st.dataframe(eta_yolda[["Müşteri Adı","Ülke","Proforma No","Tarih","Tutar","Açıklama"]], use_container_width=True)
+    else:
+        st.info("Yolda olan sipariş yok.")
+
+# === Teslim Edilenler ===
+st.markdown("### ✅ Son Teslim Edilenler")
+if "Sevk Durumu" in df_proforma.columns:
+    teslim = df_proforma[df_proforma["Sevk Durumu"] == "Ulaşıldı"].copy()
+    if not teslim.empty:
+        teslim = teslim.sort_values(by="Tarih", ascending=False).head(5)
+        st.dataframe(teslim[["Müşteri Adı","Ülke","Proforma No","Tarih","Tutar","Açıklama"]], use_container_width=True)
+    else:
+        st.info("Teslim edilmiş sipariş yok.")
