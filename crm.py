@@ -12,6 +12,18 @@ from googleapiclient.http import MediaIoBaseDownload
 st.set_page_config(page_title="ŞEKEROĞLU ÖZET DASHBOARD", layout="wide")
 locale.setlocale(locale.LC_ALL, "tr_TR.UTF-8")
 
+# Metrekutu metinlerinin boyutunu küçült ve taşmaları önle
+st.markdown(
+    """
+    <style>
+    div[data-testid="stMetricValue"] {
+        font-size: 1.2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 EXCEL_FILE_ID = "1IF6CN4oHEMk6IEE40ZGixPkfnNHLYXnQ"   # Drive Excel ID
 LOCAL_FILE = "D:/APP/temp.xlsx"
 
