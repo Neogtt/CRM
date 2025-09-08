@@ -11,6 +11,15 @@ from googleapiclient.http import MediaIoBaseDownload
 # ===========================
 st.set_page_config(page_title="ŞEKEROĞLU ÖZET DASHBOARD", layout="wide")
 
+# Allow overriding the locale via environment variable; default to Turkish.
+_desired_locale = os.getenv("APP_LOCALE", "tr_TR.UTF-8")
+try:
+    locale.setlocale(locale.LC_ALL, _desired_locale)
+except locale.Error:
+    # Fall back to the default system locale if the desired one isn't available
+    locale.setlocale(locale.LC_ALL, "")
+    st.warning(f"Locale '{_desired_locale}' unavailable. Falling back to default locale.")
+
 # Metrekutu metinlerinin boyutunu küçült ve taşmaları önle
 st.markdown(
     """
