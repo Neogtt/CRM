@@ -10,7 +10,6 @@ from googleapiclient.http import MediaIoBaseDownload
 # ==== GENEL AYARLAR
 # ===========================
 st.set_page_config(page_title="ŞEKEROĞLU ÖZET DASHBOARD", layout="wide")
-locale.setlocale(locale.LC_ALL, "tr_TR.UTF-8")
 
 # Metrekutu metinlerinin boyutunu küçült ve taşmaları önle
 st.markdown(
