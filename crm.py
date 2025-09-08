@@ -1,7 +1,7 @@
 # dashboard.py
 import streamlit as st
 import pandas as pd
-import io, datetime, os
+import io, datetime, os, locale
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -10,6 +10,7 @@ from googleapiclient.http import MediaIoBaseDownload
 # ==== GENEL AYARLAR
 # ===========================
 st.set_page_config(page_title="ŞEKEROĞLU ÖZET DASHBOARD", layout="wide")
+locale.setlocale(locale.LC_ALL, "tr_TR.UTF-8")
 
 EXCEL_FILE_ID = "1IF6CN4oHEMk6IEE40ZGixPkfnNHLYXnQ"   # Drive Excel ID
 LOCAL_FILE = "D:/APP/temp.xlsx"
@@ -151,25 +152,25 @@ else:
 col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
 with col1:
-    st.metric("📝 Bekleyen Proformalar", f"{toplam_bekleyen:,.2f} $")
+    st.metric("📝 Bekleyen Proformalar", locale.format_string("%0.2f $", toplam_bekleyen, grouping=True))
 
 with col2:
-    st.metric("⏳ Geciken Vadeler", f"{toplam_geciken:,.2f} $")
+    st.metric("⏳ Geciken Vadeler", locale.format_string("%0.2f $", toplam_geciken, grouping=True))
 
 with col3:
-    st.metric("📅 Yaklaşan Vadeler", f"{toplam_gelecek:,.2f} $")
+    st.metric("📅 Yaklaşan Vadeler", locale.format_string("%0.2f $", toplam_gelecek, grouping=True))
 
 with col4:
     st.metric("🛳️ ETA Kayıtları", eta_sayi)
 
 with col5:
-    st.metric("💵 Toplam Satış", f"{toplam_satis:,.2f} $")
+    st.metric("💵 Toplam Satış", locale.format_string("%0.2f $", toplam_satis, grouping=True))
 
 with col6:
-    st.metric("📈 Bu Ayki Satış", f"{bu_ay_satis:,.2f} $")
+    st.metric("📈 Bu Ayki Satış", locale.format_string("%0.2f $", bu_ay_satis, grouping=True))
 
 with col7:
-        st.metric("🏆 En Çok Alan Müşteri", top_musteri_isim, f"{top_musteri_tutar:,.2f} $")
+    st.metric("🏆 En Çok Alan Müşteri", top_musteri_isim, locale.format_string("%0.2f $", top_musteri_tutar, grouping=True))
     
 st.markdown("---")
 
@@ -180,8 +181,11 @@ st.markdown("---")
 st.markdown("### 📝 Bekleyen Proformalar")
 if not bekleyen.empty:
     bekleyen["Tarih"] = pd.to_datetime(bekleyen["Tarih"], errors="coerce").dt.strftime("%d/%m/%Y")
-    st.dataframe(bekleyen[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]],
-                 use_container_width=True)
+    st.dataframe(
+        bekleyen[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]]
+        .style.format({"Tutar": lambda x: locale.format_string("%0.2f $", x, grouping=True)}),
+        use_container_width=True,
+    )
 else:
     st.info("Bekleyen proforma yok.")
 
@@ -189,13 +193,19 @@ else:
 st.markdown("### 💰 Vade Takibi")
 if toplam_geciken > 0:
     st.subheader("⏳ Geciken Ödemeler")
-    st.dataframe(gecmis[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]],
-                 use_container_width=True)
+    st.dataframe(
+        gecmis[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]]
+        .style.format({"Tutar": lambda x: locale.format_string("%0.2f $", x, grouping=True)}),
+        use_container_width=True,
+    )
 
 if toplam_gelecek > 0:
     st.subheader("📅 Yaklaşan Vadeler")
-    st.dataframe(gelecek[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]],
-                 use_container_width=True)
+    st.dataframe(
+        gelecek[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]]
+        .style.format({"Tutar": lambda x: locale.format_string("%0.2f $", x, grouping=True)}),
+        use_container_width=True,
+    )
 
 # Satış Performansı
 st.markdown("### 📈 Satış Performansı")
