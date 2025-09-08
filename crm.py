@@ -85,11 +85,6 @@ try:
 except Exception:
     df_eta = pd.DataFrame()
 
-try:
-    df_sales = pd.read_excel(excel_path, sheet_name="Sales")
-except Exception:
-    df_sales = pd.DataFrame()
-
 # ===========================
 # ==== ÖZET DASHBOARD
 # ===========================
@@ -103,10 +98,11 @@ toplam_bekleyen = pd.to_numeric(bekleyen.get("Tutar", []), errors="coerce").sum(
 
 # --- Vade Takibi (Evraklar) ---
 if not df_evrak.empty:
+    df_evrak["Müşteri Adı"]   = df_evrak.iloc[:,0].astype(str)                        # A sütunu
     df_evrak["Fatura Tarihi"] = pd.to_datetime(df_evrak.iloc[:,2], errors="coerce")  # C sütunu
     df_evrak["Vade Tarihi"]   = pd.to_datetime(df_evrak.iloc[:,3], errors="coerce")  # D sütunu
     df_evrak["Tutar"]         = pd.to_numeric(df_evrak.iloc[:,4], errors="coerce")  # E sütunu
-    df_evrak["Ödendi"]        = df_evrak.iloc[:,14]  # O sütunu
+    df_evrak["Ödendi"]        = df_evrak.iloc[:,14]                                  # O sütunu
 
     vade = df_evrak[(df_evrak["Ödendi"] != True) & (df_evrak["Vade Tarihi"].notna())].copy()
     vade["Kalan Gün"] = (vade["Vade Tarihi"] - pd.to_datetime(bugun)).dt.days
@@ -116,9 +112,29 @@ if not df_evrak.empty:
 
     toplam_geciken = gecmis["Tutar"].sum()
     toplam_gelecek = gelecek["Tutar"].sum()
+    
+    df_evrak["Ay"] = df_evrak["Fatura Tarihi"].dt.to_period("M")
+    bugun_ay = pd.Period(bugun, freq="M")
+    bu_ay_satis = df_evrak[df_evrak["Ay"] == bugun_ay]["Tutar"].sum()
+    toplam_satis = df_evrak["Tutar"].sum()
+    top_musteri_isim = ""
+    top_musteri_tutar = 0
+    top_5_musteri_df = (
+        df_evrak.groupby("Müşteri Adı")["Tutar"].sum().sort_values(ascending=False).head(5).reset_index()
+    )
+    if not top_5_musteri_df.empty:
+        top_musteri_isim = top_5_musteri_df.iloc[0]["Müşteri Adı"]
+        top_musteri_tutar = top_5_musteri_df.iloc[0]["Tutar"]
+    aylik_satis_df = df_evrak.groupby("Ay")["Tutar"].sum().reset_index()
+    aylik_satis_df["Ay"] = aylik_satis_df["Ay"].dt.to_timestamp()
 else:
     toplam_geciken = toplam_gelecek = 0
     vade = pd.DataFrame()
+    bu_ay_satis = toplam_satis = 0
+    top_musteri_isim = ""
+    top_musteri_tutar = 0
+    top_5_musteri_df = pd.DataFrame()
+    aylik_satis_df = pd.DataFrame()
 
 # --- ETA Takibi ---
 if not df_eta.empty:
@@ -128,32 +144,6 @@ if not df_eta.empty:
 else:
     eta_sayi = 0
 
-# --- Sales Performance KPIs ---
-bu_ay_satis = 0
-toplam_satis = 0
-top_satisci_isim = ""
-top_satisci_tutar = 0
-aylik_satis_df = pd.DataFrame()
-satisci_df = pd.DataFrame()
-if not df_sales.empty:
-    try:
-        df_sales["Tarih"] = pd.to_datetime(df_sales.iloc[:, 0], errors="coerce")
-        df_sales["Satışçı"] = df_sales.iloc[:, 1].astype(str)
-        df_sales["Tutar"] = pd.to_numeric(df_sales.iloc[:, 2], errors="coerce")
-        df_sales.dropna(subset=["Tarih", "Tutar"], inplace=True)
-        df_sales["Ay"] = df_sales["Tarih"].dt.to_period("M")
-        bugun_ay = pd.Period(bugun, freq="M")
-        bu_ay_satis = df_sales[df_sales["Ay"] == bugun_ay]["Tutar"].sum()
-        toplam_satis = df_sales["Tutar"].sum()
-        satisci_toplam = df_sales.groupby("Satışçı")["Tutar"].sum().sort_values(ascending=False)
-        if not satisci_toplam.empty:
-            top_satisci_isim = satisci_toplam.index[0]
-            top_satisci_tutar = satisci_toplam.iloc[0]
-        aylik_satis_df = df_sales.groupby("Ay")["Tutar"].sum().reset_index()
-        aylik_satis_df["Ay"] = aylik_satis_df["Ay"].dt.to_timestamp()
-        satisci_df = satisci_toplam.reset_index()
-    except Exception:
-        df_sales = pd.DataFrame()
         
 # ===========================
 # ==== ÖZET KUTULAR
@@ -179,8 +169,8 @@ with col6:
     st.metric("📈 Bu Ayki Satış", f"{bu_ay_satis:,.2f} $")
 
 with col7:
-    st.metric("🏆 En Çok Satan", top_satisci_isim, f"{top_satisci_tutar:,.2f} $")
-
+        st.metric("🏆 En Çok Alan Müşteri", top_musteri_isim, f"{top_musteri_tutar:,.2f} $")
+    
 st.markdown("---")
 
 # ===========================
@@ -209,15 +199,15 @@ if toplam_gelecek > 0:
 
 # Satış Performansı
 st.markdown("### 📈 Satış Performansı")
-if not df_sales.empty:
+if not top_5_musteri_df.empty:
     sp_col1, sp_col2 = st.columns(2)
     with sp_col1:
-        st.subheader("Aylık Satışlar")
-        st.line_chart(aylik_satis_df.set_index("Ay"))
+         st.subheader("Top 5 Müşteri")
+        st.bar_chart(top_5_musteri_df.set_index("Müşteri"))
     with sp_col2:
-        st.subheader("Satışçı Bazında")
-        st.bar_chart(satisci_df.set_index("Satışçı"))
-    st.dataframe(df_sales[["Tarih", "Satışçı", "Tutar"]], use_container_width=True)
+        st.subheader("Aylık Satış Trend")
+        st.line_chart(aylik_satis_df.set_index("Ay"))
+    st.dataframe(top_5_musteri_df, use_container_width=True)
 else:
     st.info("Satış verisi bulunamadı.")
 
