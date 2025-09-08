@@ -137,6 +137,7 @@ if not df_evrak.empty:
                  .sort_values(ascending=False)
                  .head(5)
                  .reset_index()
+    )
     if not top_5_musteri_df.empty:
         top_musteri_isim = top_5_musteri_df.iloc[0]["Müşteri Adı"]
         top_musteri_tutar = top_5_musteri_df.iloc[0]["Tutar"]
