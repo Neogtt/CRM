@@ -203,7 +203,7 @@ if not top_5_musteri_df.empty:
     sp_col1, sp_col2 = st.columns(2)
     with sp_col1:
          st.subheader("Top 5 Müşteri")
-        st.bar_chart(top_5_musteri_df.set_index("Müşteri"))
+        st.bar_chart(top_5_musteri_df.set_index("Müşteri")
     with sp_col2:
         st.subheader("Aylık Satış Trend")
         st.line_chart(aylik_satis_df.set_index("Ay"))
