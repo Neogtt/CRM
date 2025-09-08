@@ -132,8 +132,11 @@ if not df_evrak.empty:
     top_musteri_isim = ""
     top_musteri_tutar = 0
     top_5_musteri_df = (
-        df_evrak.groupby("Müşteri Adı")["Tutar"].sum().sort_values(ascending=False).head(5).reset_index()
-    )
+        df_evrak.groupby("Müşteri Adı")["Tutar"]
+                 .sum()
+                 .sort_values(ascending=False)
+                 .head(5)
+                 .reset_index()
     if not top_5_musteri_df.empty:
         top_musteri_isim = top_5_musteri_df.iloc[0]["Müşteri Adı"]
         top_musteri_tutar = top_5_musteri_df.iloc[0]["Tutar"]
@@ -222,6 +225,7 @@ if toplam_gelecek > 0:
 st.markdown("### 📈 Satış Performansı")
 if not top_5_musteri_df.empty:
     sp_col1, sp_col2 = st.columns(2)
+    top_5_musteri_df = top_5_musteri_df.sort_values("Tutar", ascending=False)
     with sp_col1:
         st.subheader("Top 5 Müşteri")
         st.bar_chart(top_5_musteri_df.set_index("Müşteri Adı"))
