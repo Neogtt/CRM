@@ -105,7 +105,11 @@ st.title("📊 ŞEKEROĞLU İHRACAT - ÖZET PANEL")
 bugun = datetime.date.today()
 
 # --- Bekleyen Proformalar ---
-bekleyen = df_proforma[df_proforma.get("Durum", "") == "Beklemede"].copy()
+durum_column_missing = "Durum" not in df_proforma.columns
+if not durum_column_missing:
+    bekleyen = df_proforma[df_proforma["Durum"] == "Beklemede"].copy()
+else:
+    bekleyen = df_proforma.iloc[0:0].copy()
 toplam_bekleyen = pd.to_numeric(bekleyen.get("Tutar", []), errors="coerce").sum()
 
 # --- Vade Takibi (Evraklar) ---
@@ -194,7 +198,9 @@ st.markdown("---")
 # ===========================
 # Bekleyen Proformalar
 st.markdown("### 📝 Bekleyen Proformalar")
-if not bekleyen.empty:
+if durum_column_missing:
+    st.warning("'Durum' sütunu bulunamadığı için bekleyen proformalar gösterilemiyor.")
+elif not bekleyen.empty:
     bekleyen["Tarih"] = pd.to_datetime(bekleyen["Tarih"], errors="coerce").dt.strftime("%d/%m/%Y")
     st.dataframe(
         bekleyen[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]]
