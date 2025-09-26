@@ -11,6 +11,33 @@ from googleapiclient.http import MediaIoBaseDownload
 # ===========================
 st.set_page_config(page_title="ŞEKEROĞLU ÖZET DASHBOARD", layout="wide")
 
+def _configure_locale():
+    """Set a sensible locale for currency formatting if possible."""
+    for loc in ("tr_TR.UTF-8", "en_US.UTF-8", "en_US.utf8", ""):  # fallbacks
+        try:
+            locale.setlocale(locale.LC_ALL, loc)
+            return
+        except locale.Error:
+            continue
+
+
+_configure_locale()
+
+
+def format_currency(value: float) -> str:
+    """Safely format numeric values as currency strings."""
+    try:
+        if pd.isna(value):
+            return "-"
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return "-"
+
+    try:
+        return locale.format_string("%0.2f $", numeric_value, grouping=True)
+    except (TypeError, ValueError):
+        return f"{numeric_value:,.2f} $"
+
 # Metrekutu metinlerinin boyutunu küçült ve taşmaları önle
 st.markdown(
     """
@@ -110,7 +137,8 @@ if not durum_column_missing:
     bekleyen = df_proforma[df_proforma["Durum"] == "Beklemede"].copy()
 else:
     bekleyen = df_proforma.iloc[0:0].copy()
-toplam_bekleyen = pd.to_numeric(bekleyen.get("Tutar", []), errors="coerce").sum()
+bekleyen["Tutar"] = pd.to_numeric(bekleyen.get("Tutar", []), errors="coerce")
+toplam_bekleyen = bekleyen["Tutar"].sum()
 
 # --- Vade Takibi (Evraklar) ---
 if not df_evrak.empty:
@@ -171,25 +199,25 @@ else:
 col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
 with col1:
-    st.metric("📝 Bekleyen Proformalar", locale.format_string("%0.2f $", toplam_bekleyen, grouping=True))
+    st.metric("📝 Bekleyen Proformalar", format_currency(toplam_bekleyen))
 
 with col2:
-    st.metric("⏳ Geciken Vadeler", locale.format_string("%0.2f $", toplam_geciken, grouping=True))
+    st.metric("⏳ Geciken Vadeler", format_currency(toplam_geciken))
 
 with col3:
-    st.metric("📅 Yaklaşan Vadeler", locale.format_string("%0.2f $", toplam_gelecek, grouping=True))
+    st.metric("📅 Yaklaşan Vadeler", format_currency(toplam_gelecek))
 
 with col4:
     st.metric("🛳️ ETA Kayıtları", eta_sayi)
 
 with col5:
-    st.metric("💵 Toplam Satış", locale.format_string("%0.2f $", toplam_satis, grouping=True))
+    st.metric("💵 Toplam Satış", format_currency(toplam_satis))
 
 with col6:
-    st.metric("📈 Bu Ayki Satış", locale.format_string("%0.2f $", bu_ay_satis, grouping=True))
-
+    st.metric("📈 Bu Ayki Satış", format_currency(bu_ay_satis))
+    
 with col7:
-    st.metric("🏆 En Çok Alan Müşteri", top_musteri_isim, locale.format_string("%0.2f $", top_musteri_tutar, grouping=True))
+    st.metric("🏆 En Çok Alan Müşteri", top_musteri_isim, format_currency(top_musteri_tutar))
     
 st.markdown("---")
 
@@ -204,7 +232,7 @@ elif not bekleyen.empty:
     bekleyen["Tarih"] = pd.to_datetime(bekleyen["Tarih"], errors="coerce").dt.strftime("%d/%m/%Y")
     st.dataframe(
         bekleyen[["Müşteri Adı", "Ülke", "Proforma No", "Tarih", "Tutar", "Vade (gün)", "Açıklama"]]
-        .style.format({"Tutar": lambda x: locale.format_string("%0.2f $", x, grouping=True)}),
+        .style.format({"Tutar": format_currency}),
         use_container_width=True,
     )
 else:
@@ -216,7 +244,7 @@ if toplam_geciken > 0:
     st.subheader("⏳ Geciken Ödemeler")
     st.dataframe(
         gecmis[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]]
-        .style.format({"Tutar": lambda x: locale.format_string("%0.2f $", x, grouping=True)}),
+        .style.format({"Tutar": format_currency}),
         use_container_width=True,
     )
 
@@ -224,7 +252,7 @@ if toplam_gelecek > 0:
     st.subheader("📅 Yaklaşan Vadeler")
     st.dataframe(
         gelecek[["Müşteri Adı","Proforma No","Fatura No","Vade Tarihi","Tutar","Kalan Gün"]]
-        .style.format({"Tutar": lambda x: locale.format_string("%0.2f $", x, grouping=True)}),
+        .style.format({"Tutar": format_currency}),
         use_container_width=True,
     )
 
