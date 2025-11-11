@@ -1,0 +1,55 @@
+appId: com.expocrm.localcrm
+productName: EXPO CRM
+copyright: Copyright © 2024 EXPO CRM
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - 'server/**/*'
+  - 'client/build/**/*'
+  - 'electron/**/*'
+  - 'package.json'
+  - 'temp/**/*'
+  - '!temp/local.xlsx'
+  - 'node_modules/**/*'
+  - '!.git/**/*'
+  - '!*.md'
+  - '!.env.example'
+  - '!.env'
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  requestedExecutionLevel: requireAdministrator
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: EXPO CRM
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  deleteAppDataOnUninstall: false
+  artifactName: expocrmsetup.${ext}
+  include: build/installer.nsh
+  license: LICENSE.txt
+
+mac:
+  target: dmg
+  icon: build/icon.icns
+  category: public.app-category.business
+
+linux:
+  target: AppImage
+  icon: build/icon.png
+  category: Office
+
+publish: null
+

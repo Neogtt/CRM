@@ -1,0 +1,98 @@
+{
+  "name": "expocrm",
+  "version": "1.0.0",
+  "description": "EXPO CRM - Node.js implementation",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-client": "cd client && npm install",
+    "deploy": "npm install && cd client && npm install && npm run build && cd ..",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop ecosystem.config.js",
+    "pm2:restart": "pm2 restart ecosystem.config.js",
+    "electron": "electron .",
+    "electron:dev": "electron . --dev",
+    "build:win": "npm run build && electron-builder --win",
+    "build:installer": "npm run build && electron-builder --win --config electron-builder.yml",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux",
+    "build:all": "npm run build && electron-builder --win --mac --linux"
+  },
+  "keywords": [
+    "crm",
+    "expo",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.4.1",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "googleapis": "^126.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "nodemon": "^3.0.2"
+  },
+  "build": {
+    "appId": "com.expocrm.localcrm",
+    "productName": "EXPO CRM",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "server/**/*",
+      "client/build/**/*",
+      "electron/**/*",
+      "package.json",
+      "temp/**/*",
+      "!temp/local.xlsx",
+      "node_modules/**/*",
+      "!.git/**/*",
+      "!*.md",
+      "!.env.example",
+      "!.env"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EXPO CRM",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "expocrmsetup.${ext}"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+node_modules/
+client/node_modules/
+client/build/
+.env
+*.log
+.DS_Store
+temp/
+temp.xlsx
+service-account-key.json
+*.pem
+*.key
+
+# Local Excel file (contains your data - backup before git operations!)
+# Uncomment the line below if you want to ignore local.xlsx
+# temp/local.xlsx
+
+# Local file storage (PDFs, etc.)
+files/
+*.pdf
+
+# Electron Builder
+dist/
+build/
+*.exe
+*.dmg
+*.AppImage
+

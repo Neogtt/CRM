@@ -1,0 +1,15 @@
+node_modules
+client/node_modules
+client/build
+.env
+*.log
+.DS_Store
+temp/
+files/
+.git
+.gitignore
+README.md
+DEPLOY.md
+QUICK_START.md
+*.md
+
